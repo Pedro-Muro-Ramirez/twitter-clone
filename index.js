@@ -2,30 +2,30 @@ import { tweetsData } from "./data.js";
 
 // Initial variables 
 const tweetInput = document.getElementById('tweet-input')
-const tweetBtn = document.getElementById('tweet-btn')
 const feed = document.getElementById('feed')
-
-// Listen for click events on the tweet button
-tweetBtn.addEventListener("click", function(){
-    console.log(tweetInput.value)
-    tweetInput.value = ''
-})
 
 
 // Listen for click events on the document
 document.addEventListener("click", function(e){
+    // Check if the clicked element is a like button, retweet button, reply button, or tweet button
     if(e.target.dataset.like) {
         handleLikeClick(e.target.dataset.like)
     } else if(e.target.dataset.retweet) {
         handleRetweetClick(e.target.dataset.retweet)
+    } else if(e.target.dataset.reply) {
+        handleReplyClick(e.target.dataset.reply)
+    } else if(e.target.id === 'tweet-btn'){
+        handleTweetBtnClick()
     }
 })
 
 // Handle the like button click
 function handleLikeClick(tweetId) {
+    // Find the tweet object in the tweetsData array that matches the clicked like button
     tweetsData.forEach(function(tweet){
         if(tweetId === tweet.uuid){
             const targetTweetObj = tweet
+            // Toggle the isLiked property and update the likes count
             if(targetTweetObj.isLiked) {
                 targetTweetObj.likes--
             } else {
@@ -37,10 +37,13 @@ function handleLikeClick(tweetId) {
     })
 }
 
+// Handle the retweet button click
 function handleRetweetClick(tweetId) {
+        // Find the tweet object in the tweetsData array that matches the clicked retweet button
         tweetsData.forEach(function(tweet){
             if(tweetId === tweet.uuid){
                 const tweetObj = tweet
+                // Toggle the isRetweeted property and update the retweets count
                 if(tweetObj.isRetweeted) {
                     tweetObj.retweets--
                 } else {
@@ -52,12 +55,44 @@ function handleRetweetClick(tweetId) {
         })
     }
 
+// Handle the reply button click
+function handleReplyClick(replyId){
+    // Toggle the visibility of the replies section for the clicked reply button
+    const replyDiv = document.getElementById(`replies-${replyId}`)
+    replyDiv.classList.toggle('hidden')
+}
+
+// Handle the tweet button click
+function handleTweetBtnClick() {
+    console.log(tweetInput.value)
+}
+
 // Create the feed HTML
 function getFeedHtml() {
     let feedHtml = ``
+    // Loop through each tweet
     tweetsData.forEach(function(tweet){
+        // Determine the classes for like and retweet icons based on their state
         let likeIconClass = tweet.isLiked ? 'liked' : ''
         let retweetIconClass = tweet.isRetweeted ? 'retweeted' : ''
+        // Loop through each reply
+        let repliesHtml = ``
+        if(tweet.replies.length) {
+            tweet.replies.forEach(function(reply){
+                // Create the HTML for each reply
+                repliesHtml += `
+                    <div class="tweet-reply">
+                        <div class="tweet-inner">
+                            <img src="${reply.profilePic}" class="profile-pic">
+                            <div>
+                                <p class="handle">${reply.handle}</p>
+                                <p class="tweet-text">${reply.tweetText}</p>
+                            </div>
+                        </div>
+                    </div>`
+            })
+        }
+        // Create the HTML for each tweet
         feedHtml += `
         <div class="tweet">
             <div class="tweet-inner">
@@ -81,6 +116,9 @@ function getFeedHtml() {
                 </div>   
             </div>            
         </div>
+        <div id="replies-${tweet.uuid}" class="hidden">
+            ${repliesHtml}
+        </div> 
         </div>`
     }) 
     return feedHtml
